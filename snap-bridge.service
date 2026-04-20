@@ -1,0 +1,56 @@
+# SNAP Bridge systemd service unit
+# Place this file at: /etc/systemd/system/snap-bridge.service
+#
+# Then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable snap-bridge
+#   sudo systemctl start snap-bridge
+#   sudo systemctl status snap-bridge
+
+[Unit]
+Description=SNAP Bridge — WhatsApp Notification Bridge
+Documentation=https://github.com/your-org/snap-bridge
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# === Change these to match your server setup ===
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/snap-bridge
+
+# Load .env file — systemd supports EnvironmentFile natively
+EnvironmentFile=/var/www/snap-bridge/.env
+
+# Start the compiled bridge
+ExecStart=/usr/bin/node /var/www/snap-bridge/dist/index.js
+
+# Graceful reload with a new PID on restart
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60s
+StartLimitBurst=5
+
+# Resource limits
+MemoryMax=512M
+LimitNOFILE=65536
+
+# Hardening
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+# Allow write to auth_state directory and logs — adjust paths as needed
+ReadWritePaths=/var/www/snap-bridge/auth_state /var/log/snap-bridge
+
+# Logging — goes to journald, view with: journalctl -u snap-bridge -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=snap-bridge
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+node_modules/
+dist/
+
+# WhatsApp session credentials — NEVER commit these
+auth_state/
+*.session
+*.creds.json
+
+# Environment config
+.env
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
