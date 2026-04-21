@@ -188,12 +188,10 @@ async function connect(): Promise<void> {
     shouldIgnoreJid: (jid) => isJidBroadcast(jid),
     // Keep-alive ping interval (30s)
     keepAliveIntervalMs: 30_000,
-    // Fix: Using a more specific Chrome identity often bypasses the 'odn' 405 rejection on VPS IPs
-    browser: ['Ubuntu', 'Chrome', '122.0.6261.112'],
+    // Fix: Using a valid desktop browser identity
+    browser: Browsers.ubuntu('Desktop'),
     // Workaround: Syncing full history on a new VPS connection is a bot signal; disable it
     syncFullHistory: false,
-    // Workaround: Hardcode protocol version to a known stable for current pairing
-    version: [2, 3000, 1015901307],
   });
 
   // Persist credentials whenever they change
