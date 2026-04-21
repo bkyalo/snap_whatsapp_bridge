@@ -190,8 +190,6 @@ async function connect(): Promise<void> {
     keepAliveIntervalMs: 30_000,
     // Fix: Explicitly mask as macOS Desktop to avoid 405 error rejections
     browser: Browsers.macOS('Desktop'),
-    // Workaround: Hardcode protocol version to avoid "atn" location rejection (405)
-    version: [2, 3000, 1015901307],
   });
 
   // Persist credentials whenever they change
