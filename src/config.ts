@@ -42,10 +42,12 @@ export const config = {
   },
 
   webhook: {
-    /** Laravel URL to POST inbound events to (Phase 2). Empty = disabled. */
-    laravelUrl: optional_env('LARAVEL_WEBHOOK_URL', ''),
+    /** Laravel URL to POST inbound events to. Empty = disabled. */
+    url: optional_env('LARAVEL_WEBHOOK_URL', ''),
     /** HMAC-SHA256 secret for signing payloads */
     secret: optional_env('LARAVEL_WEBHOOK_SECRET', ''),
+    /** Max retries for a single webhook event */
+    maxRetries: 5,
   },
 
   logging: {

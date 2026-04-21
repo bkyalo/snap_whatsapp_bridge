@@ -10,6 +10,7 @@ import * as QRCode from 'qrcode';
 import { loadAuthState, clearAuthState } from './authState';
 import { logger } from '../logger';
 import { toWhatsAppJid, jidToPhone } from '../phoneUtils';
+import { WebhookService } from '../webhook/webhookService';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -214,6 +215,9 @@ async function connect(): Promise<void> {
     if (connection === 'open') {
       handleConnected();
     }
+
+    // Notify Laravel of status change
+    WebhookService.notify('session.update', getStatus());
   });
 
   // === Incoming messages (Phase 2 hook — no-op for now) ===
@@ -221,10 +225,17 @@ async function connect(): Promise<void> {
     if (type === 'notify') {
       for (const msg of messages) {
         if (!msg.key.fromMe) {
-          // Phase 2: POST to Laravel webhook URL with message payload
+          WebhookService.notify('message.inbound', {
+            id: msg.key.id,
+            from: jidToPhone(msg.key.remoteJid!),
+            pushName: msg.pushName,
+            text: msg.message?.conversation || msg.message?.extendedTextMessage?.text || '',
+            timestamp: msg.messageTimestamp,
+          });
+          
           logger.debug(
             { id: msg.key.id, from: msg.key.remoteJid },
-            'Inbound message received (webhook not wired)',
+            'Inbound message received and webhook dispatched',
           );
         }
       }
@@ -233,8 +244,15 @@ async function connect(): Promise<void> {
 
   // === Message status updates (Phase 2 hook) ===
   socket.ev.on('message-receipt.update', (updates) => {
-    // Phase 2: POST delivery/read receipts to Laravel webhook URL
-    logger.debug({ count: updates.length }, 'Receipt updates received (webhook not wired)');
+    for (const update of updates) {
+      WebhookService.notify('message.status.update', {
+        id: update.key.id,
+        phone: jidToPhone(update.key.remoteJid!),
+        status: update.receipt.type === 'read' ? 'read' : 'delivered',
+        timestamp: update.receipt.t,
+      });
+    }
+    logger.debug({ count: updates.length }, 'Receipt updates received and webhooks dispatched');
   });
 }
 

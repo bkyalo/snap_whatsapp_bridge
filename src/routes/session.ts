@@ -78,9 +78,9 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // ---------------------------------------------------------------------------
-  // POST /logout
+  // POST /session/logout
   // ---------------------------------------------------------------------------
-  app.post('/logout', async (_request, reply) => {
+  app.post('/session/logout', async (_request, reply) => {
     try {
       await logout();
       return reply.status(200).send({

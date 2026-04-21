@@ -20,7 +20,7 @@ Base URL: `http://127.0.0.1:3000` (unless reconfigured or behind Nginx)
 | `GET` | `/session/status` | ✅ | Get current session status |
 | `GET` | `/session/qr` | ✅ | Retrieve QR code for linking |
 | `POST` | `/send-text` | ✅ | Send a plain text WhatsApp message |
-| `POST` | `/logout` | ✅ | Log out and clear stored session |
+| `POST` | /session/logout | ✅ | Log out and clear stored session |
 
 ---
 
@@ -252,7 +252,7 @@ Sends a plain text WhatsApp message to a single recipient.
 
 ---
 
-## POST `/logout`
+## POST `/session/logout`
 
 Logs out the linked WhatsApp account and clears all stored session credentials. After this, the bridge will not attempt to reconnect. A fresh QR login is required.
 
@@ -348,6 +348,6 @@ curl -s -X POST $BASE/send-text \
   }' | jq
 
 # Logout
-curl -s -X POST $BASE/logout \
+curl -s -X POST $BASE/session/logout \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
