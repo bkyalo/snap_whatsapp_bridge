@@ -4,6 +4,7 @@ import makeWASocket, {
   WASocket,
   ConnectionState,
   proto,
+  Browsers,
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import * as QRCode from 'qrcode';
@@ -187,6 +188,8 @@ async function connect(): Promise<void> {
     shouldIgnoreJid: (jid) => isJidBroadcast(jid),
     // Keep-alive ping interval (30s)
     keepAliveIntervalMs: 30_000,
+    // Fix: Explicitly mask as macOS Desktop to avoid 405 error rejections
+    browser: Browsers.macOS('Desktop'),
   });
 
   // Persist credentials whenever they change
@@ -273,10 +276,19 @@ function handleConnected(): void {
 }
 
 function handleDisconnect(lastDisconnect: { error: Boom } | undefined): void {
-  const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+  const err = lastDisconnect?.error as Boom | undefined;
+  const statusCode = err?.output?.statusCode;
   const reason = Object.entries(DisconnectReason).find(([, v]) => v === statusCode)?.[0] ?? 'Unknown';
 
-  logger.warn({ statusCode, reason }, 'WhatsApp connection closed');
+  logger.warn(
+    {
+      statusCode,
+      reason,
+      payload: err?.output?.payload,
+      data: (err as any)?.data,
+    },
+    'WhatsApp connection closed',
+  );
 
   if (statusCode === DisconnectReason.loggedOut) {
     // Explicit logout or device de-linked from phone — do NOT reconnect
