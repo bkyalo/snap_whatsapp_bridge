@@ -190,6 +190,8 @@ async function connect(): Promise<void> {
     keepAliveIntervalMs: 30_000,
     // Fix: Explicitly mask as macOS Desktop to avoid 405 error rejections
     browser: Browsers.macOS('Desktop'),
+    // Workaround: Hardcode protocol version to avoid "atn" location rejection (405)
+    version: [2, 3000, 1015901307],
   });
 
   // Persist credentials whenever they change
@@ -248,11 +250,20 @@ async function connect(): Promise<void> {
   // === Message status updates (Phase 2 hook) ===
   socket.ev.on('message-receipt.update', (updates) => {
     for (const update of updates) {
+      // In v7, receipt contains explicit timestamps instead of a 'type' field
+      const isRead = !!update.receipt.readTimestamp;
+      const rawTimestamp = update.receipt.readTimestamp || update.receipt.receiptTimestamp;
+      
+      // Baileys timestamps can be Long objects; convert to number
+      const timestamp = typeof rawTimestamp === 'object' && rawTimestamp !== null && 'toNumber' in rawTimestamp
+        ? (rawTimestamp as any).toNumber() 
+        : rawTimestamp;
+
       WebhookService.notify('message.status.update', {
         id: update.key.id,
         phone: jidToPhone(update.key.remoteJid!),
-        status: update.receipt.type === 'read' ? 'read' : 'delivered',
-        timestamp: update.receipt.t,
+        status: isRead ? 'read' : 'delivered',
+        timestamp: timestamp,
       });
     }
     logger.debug({ count: updates.length }, 'Receipt updates received and webhooks dispatched');
